@@ -193,7 +193,9 @@ private struct ARPlaceClipContainer: UIViewRepresentable {
         private func attach(to imageAnchor: ARImageAnchor) {
             guard let arView else { return }
             if let existing = wallAnchorEntity { arView.scene.removeAnchor(existing) }
-            let anchorEntity = AnchorEntity(world: imageAnchor.transform)
+            // Same fix as ARClipFinderScreen -- anchor by identifier, not by
+            // passing the ARAnchor object directly.
+            let anchorEntity = AnchorEntity(.anchor(identifier: imageAnchor.identifier))
 
             // Already-placed clips from earlier in this session -- smaller,
             // dimmer, so the CURRENT placement still reads as the active one.
