@@ -40,20 +40,18 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 struct RootView: View {
     @EnvironmentObject var auth: AuthService
 
-    private enum Phase { case signIn, checkingSetup, setupWizard, tutorial, main }
+    private enum Phase { case signIn, checkingSetup, setupWizard, main }
     @State private var phase: Phase = .signIn
 
     var body: some View {
         Group {
             switch phase {
             case .signIn:
-                SignInView(onSignedIn: routeAfterSignIn, onSkip: routeToTutorial)
+                SignInView(onSignedIn: routeAfterSignIn)
             case .checkingSetup:
                 ZStack { RLColor.limestone.ignoresSafeArea(); ProgressView() }
             case .setupWizard:
                 SetupProfileView(onFinished: { phase = .main })
-            case .tutorial:
-                TutorialView(onFinished: { phase = .main })
             case .main:
                 MainTabView()
             }
@@ -73,17 +71,6 @@ struct RootView: View {
         FriendsRepository.shared.checkSetupComplete { completed in
             phase = completed ? .main : .setupWizard
         }
-    }
-
-    /// Skip button's destination -- bypasses the name/age/location wizard
-    /// entirely and goes straight to the short tutorial, landing in the app
-    /// with an empty-but-functional profile the climber can fill in later
-    /// from Edit Profile.
-    private func routeToTutorial() {
-        LocalProfileStore.hasCompletedProfileSetup = true
-        FriendsRepository.shared.markSetupComplete()
-        FriendsRepository.shared.syncCurrentUserProfile()
-        phase = .tutorial
     }
 }
 
