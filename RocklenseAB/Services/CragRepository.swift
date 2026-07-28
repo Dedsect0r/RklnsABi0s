@@ -52,7 +52,7 @@ final class CragRepository: ObservableObject {
     func addCrag(_ crag: Crag, completion: @escaping (Bool) -> Void = { _ in }) {
         let doc = collection.document()
         var toSave = crag
-        toSave.id = doc.id
+        toSave.id = doc.documentID
         do {
             try doc.setData(from: toSave) { error in completion(error == nil) }
         } catch { completion(false) }
