@@ -1,5 +1,4 @@
 import Foundation
-import FirebaseFirestoreSwift
 
 // MARK: - Crag / Wall / Route / ClipPoint
 //
