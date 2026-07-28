@@ -10,6 +10,10 @@ import SwiftUI
 struct SignInView: View {
     @EnvironmentObject var auth: AuthService
     let onSignedIn: () -> Void
+    /// Bypasses sign-in entirely -- still signs in anonymously in the
+    /// background (Firestore reads/writes need a uid even for a guest), but
+    /// skips straight to the tutorial instead of the profile setup wizard.
+    let onSkip: () -> Void
 
     @State private var loading = false
     @State private var errorText: String?
@@ -70,6 +74,11 @@ struct SignInView: View {
                         .font(.system(size: 14))
                         .foregroundStyle(RLColor.cream70)
                         .padding(.top, 4)
+
+                        Button("Skip") { skip() }
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(RLColor.rust)
+                            .padding(.top, 2)
                     }
                 }
             }
@@ -127,6 +136,24 @@ struct SignInView: View {
                 onSignedIn()
             } catch {
                 errorText = "Couldn't start a profile \u{2014} try again"
+            }
+            loading = false
+        }
+    }
+
+    private func skip() {
+        loading = true
+        errorText = nil
+        Task {
+            do {
+                // If something else already signed us in on a previous
+                // attempt, don't sign in again -- just move on.
+                if auth.currentUser == nil {
+                    try await auth.signInAnonymously()
+                }
+                onSkip()
+            } catch {
+                errorText = "Couldn't skip sign-in \u{2014} try again"
             }
             loading = false
         }
