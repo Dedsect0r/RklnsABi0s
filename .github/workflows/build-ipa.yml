@@ -38,11 +38,14 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
-      # Signing is deliberately turned OFF here -- Sideloadly/AltStore each
-      # re-sign the .ipa themselves with a free Apple ID during install, so
-      # the build coming out of CI doesn't need (and can't have, without a
-      # paid account) a real Apple signing identity. This just needs to be a
-      # valid unsigned arm64 build for a real device, not the Simulator.
+      - name: Add Google Sign-In URL scheme
+        run: |
+          REVERSED_CLIENT_ID=$(/usr/libexec/PlistBuddy -c "Print :REVERSED_CLIENT_ID" RocklenseAB/GoogleService-Info.plist)
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" RocklenseAB/Resources/Info.plist 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" RocklenseAB/Resources/Info.plist
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" RocklenseAB/Resources/Info.plist
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $REVERSED_CLIENT_ID" RocklenseAB/Resources/Info.plist
+
       - name: Build for device (unsigned)
         run: |
           xcodebuild \
