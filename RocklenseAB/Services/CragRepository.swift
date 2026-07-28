@@ -296,8 +296,6 @@ final class CragRepository: ObservableObject {
              blurb: "5 min from downtown Canmore. Limestone, sport, family-friendly.",
              tags: ["Limestone", "Sport", "Family-friendly"],
              walls: [Wall(id: "main-wall", name: "Main Wall",
-                          referenceImageAsset: "echo_canyon_rusty_wall.jpg",
-                          referenceImageWidthMeters: 8.0,
                           routes: [
                               Route(id: "kg", name: "Kid Gloves", grade: "5.6", lengthMeters: 18, boltCount: 6),
                               Route(id: "od", name: "Overhang Delight", grade: "5.9", lengthMeters: 20, boltCount: 7),
@@ -312,7 +310,9 @@ final class CragRepository: ObservableObject {
                                             ClipPoint(xOffsetMeters: 0.9, yOffsetMeters: 12.2)]),
                               Route(id: "ct", name: "Chalk Talk", grade: "5.10c", lengthMeters: 22, boltCount: 8),
                               Route(id: "pc", name: "Pine Crux", grade: "5.11a", lengthMeters: 25, boltCount: 9)
-                          ])]),
+                          ],
+                          referenceImageAsset: "echo_canyon_rusty_wall.jpg",
+                          referenceImageWidthMeters: 8.0)]),
         Crag(name: "Grassi Lakes", area: "Canmore", lat: 51.0728, lng: -115.3567,
              blurb: "10 min from downtown Canmore. Limestone, sport, popular.",
              tags: ["Limestone", "Sport", "Popular"],
