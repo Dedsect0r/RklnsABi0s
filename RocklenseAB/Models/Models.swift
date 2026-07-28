@@ -167,5 +167,5 @@ func gradeRangeLabel(_ crag: Crag?) -> String {
     if grades.isEmpty { return "No routes" }
     let numeric = grades.compactMap(parseGradeNumeric)
     guard let min = numeric.min(), let max = numeric.max() else { return grades[0] }
-    return min == max ? "5.\(min)" : "5.\(min)\u20135.\(max)"
+    return min == max ? "5.\(min)" : "5.\(min)\u{2013}5.\(max)"
 }
