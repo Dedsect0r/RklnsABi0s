@@ -1,0 +1,94 @@
+\
+# XcodeGen project spec. This is the iOS equivalent of build_gradle.kts /
+# settings_gradle.kts: a declarative description of the app target and its
+# Swift Package dependencies, checked into source control, that generates a
+# real .xcodeproj deterministically instead of you hand-clicking through
+# Xcode's UI or me hand-writing an error-prone raw .pbxproj file.
+#
+# ONE-TIME SETUP (on a Mac, with Xcode installed):
+#   brew install xcodegen
+#   cd RocklenseAB-iOS
+#   xcodegen generate
+#   open RocklenseAB.xcodeproj
+#
+# After that, treat RocklenseAB.xcodeproj as a normal generated artifact --
+# if you add/remove Swift files on disk, just re-run `xcodegen generate`
+# rather than manually fixing project membership in Xcode.
+
+name: RocklenseAB
+options:
+  bundleIdPrefix: com.rocklense
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+packages:
+  # Firebase iOS SDK -- same Firestore/Storage/Auth project the Android app
+  # uses. Auth is used for Google Sign-In + Sign in with Apple + anonymous,
+  # Firestore for the crags/users/friendRequests/reviews/reports collections,
+  # Storage for avatars/crag photos/wall reference images, Crashlytics for
+  # crash visibility (matches the Android app's Crashlytics dependency).
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 11.0.0
+  # Google Sign-In for iOS -- same identity provider as Android's
+  # com.google.android.gms:play-services-auth, wired to the same Firebase
+  # Auth project so a climber's Google account works identically on both
+  # platforms.
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: 7.1.0
+
+targets:
+  RocklenseAB:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: RocklenseAB
+        excludes:
+          - "Resources/Info.plist"
+    resources:
+      - path: RocklenseAB/Resources/Assets.xcassets
+      # Drop your real GoogleService-Info.plist here before building --
+      # see README_iOS.md. A placeholder is NOT included in this bundle
+      # deliberately, since it contains project-specific secrets you
+      # generate yourself from the Firebase console.
+    info:
+      path: RocklenseAB/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Rocklense AB
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSCameraUsageDescription: "Rocklense AB uses the camera to scan crag walls in AR and to take reference/mapping photos."
+        NSLocationWhenInUseUsageDescription: "Rocklense AB uses your location to sort nearby crags and to pre-fill coordinates when you add a new one."
+        NSPhotoLibraryAddUsageDescription: "Rocklense AB can save photos you capture."
+        # ARKit is treated as OPTIONAL (see the README) -- Map/Profile/social
+        # features all work on devices/simulators without ARKit support;
+        # only the Clip Finder tab and the wall-mapping AR flows are gated
+        # behind a runtime ARWorldTrackingConfiguration.isSupported check.
+        # Deliberately NOT setting UIRequiredDeviceCapabilities: [arkit],
+        # which would make the App Store hide the app entirely on
+        # non-ARKit devices.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rocklense.ab
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"  # iPhone only, matches the Android app's phone-only layouts
+        ENABLE_PREVIEWS: YES
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: Firebase
+        product: FirebaseFirestoreSwift
+      - package: Firebase
+        product: FirebaseStorage
+      - package: Firebase
+        product: FirebaseCrashlytics
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift

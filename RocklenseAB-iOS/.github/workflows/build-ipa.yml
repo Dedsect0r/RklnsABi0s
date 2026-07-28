@@ -1,0 +1,72 @@
+name: Build unsigned IPA (for Sideloadly/AltStore)
+
+# Manual trigger (a "Run workflow" button on the Actions tab) plus automatic
+# on every push to main. Runs entirely on GitHub's own macOS cloud runner --
+# nobody on the team needs a Mac for this step.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # GoogleService-Info.plist has your Firebase project's config in it --
+      # not something to commit to a public repo in plain text. Store its
+      # base64 contents as a repo secret named GOOGLE_SERVICE_INFO_PLIST_B64
+      # (Settings -> Secrets and variables -> Actions -> New repository
+      # secret) and this step reconstructs the real file at build time.
+      #
+      # To get the base64 string, run this on any machine that has the
+      # plist (a phone, a text editor, doesn't need to be a Mac):
+      #   base64 -i GoogleService-Info.plist | pbcopy      (macOS)
+      #   certutil -encode GoogleService-Info.plist tmp.b64  (Windows, then
+      #     open tmp.b64 in a text editor and strip the ----BEGIN/END----
+      #     lines before pasting)
+      - name: Restore GoogleService-Info.plist
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICE_INFO_PLIST_B64 }}" | base64 --decode > RocklenseAB/GoogleService-Info.plist
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      # Signing is deliberately turned OFF here -- Sideloadly/AltStore each
+      # re-sign the .ipa themselves with a free Apple ID during install, so
+      # the build coming out of CI doesn't need (and can't have, without a
+      # paid account) a real Apple signing identity. This just needs to be a
+      # valid unsigned arm64 build for a real device, not the Simulator.
+      - name: Build for device (unsigned)
+        run: |
+          xcodebuild \
+            -project RocklenseAB.xcodeproj \
+            -scheme RocklenseAB \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            clean build
+
+      # An .ipa is just a zip with a specific folder layout: Payload/App.app
+      # at the root. Sideloadly/AltStore expect exactly this.
+      - name: Package into IPA
+        run: |
+          mkdir -p Payload
+          cp -r "build/Build/Products/Release-iphoneos/RocklenseAB.app" Payload/
+          zip -r RocklenseAB.ipa Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RocklenseAB-ipa
+          path: RocklenseAB.ipa
+          retention-days: 14
