@@ -10,29 +10,21 @@ import SwiftUI
 struct SignInView: View {
     @EnvironmentObject var auth: AuthService
     let onSignedIn: () -> Void
-    /// Bypasses sign-in entirely -- still signs in anonymously in the
-    /// background (Firestore reads/writes need a uid even for a guest), but
-    /// skips straight to the tutorial instead of the profile setup wizard.
-    let onSkip: () -> Void
 
     @State private var loading = false
     @State private var errorText: String?
 
     var body: some View {
         ZStack {
-            RLColor.dusk.ignoresSafeArea()
-            VStack(spacing: 24) {
+            RLColor.limestone.ignoresSafeArea()
+            VStack(spacing: 28) {
                 Spacer()
 
-                Image(systemName: "mountain.2.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(RLColor.rust)
-                Text("Rocklense AB")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundStyle(RLColor.chalk)
-                Text("Find your clips. Map your crags.")
-                    .font(.system(size: 15))
-                    .foregroundStyle(RLColor.cream70)
+                Image("LogoIcon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 220, height: 220)
+                    .clipShape(Circle())
 
                 Spacer()
 
@@ -41,12 +33,16 @@ struct SignInView: View {
                         .font(.system(size: 13))
                         .foregroundStyle(RLColor.rust)
                         .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
                 }
 
                 if loading {
-                    ProgressView().tint(RLColor.chalk)
+                    ProgressView()
                 } else {
-                    VStack(spacing: 12) {
+                    VStack(spacing: 14) {
+                        // Apple enforces its own button styling (black/white/
+                        // outline only) -- .black reads best against the
+                        // light cream background here.
                         SignInWithAppleButton(.signIn) { request in
                             let prepared = auth.makeAppleSignInRequest()
                             request.requestedScopes = prepared.requestedScopes
@@ -54,36 +50,30 @@ struct SignInView: View {
                         } onCompletion: { result in
                             handleApple(result)
                         }
-                        .signInWithAppleButtonStyle(.white)
-                        .frame(height: 50)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .signInWithAppleButtonStyle(.black)
+                        .frame(height: 54)
+                        .clipShape(Capsule())
+                        .padding(.horizontal, 32)
 
                         Button {
                             signInGoogle()
                         } label: {
-                            HStack {
-                                Image(systemName: "g.circle.fill")
-                                Text("Sign in with Google")
-                            }
+                            Text("Sign in with Google")
                         }
-                        .buttonStyle(RLPrimaryButtonStyle(background: RLColor.chalk, foreground: RLColor.ink))
+                        .buttonStyle(RLPrimaryButtonStyle(background: RLColor.pine, foreground: RLColor.chalk))
+                        .padding(.horizontal, 32)
 
                         Button("Continue without an account") {
                             signInAnonymously()
                         }
                         .font(.system(size: 14))
-                        .foregroundStyle(RLColor.cream70)
+                        .foregroundStyle(RLColor.ink)
                         .padding(.top, 4)
-
-                        Button("Skip") { skip() }
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(RLColor.rust)
-                            .padding(.top, 2)
                     }
                 }
+
+                Spacer()
             }
-            .padding(.horizontal, 32)
-            .padding(.bottom, 40)
         }
     }
 
@@ -136,24 +126,6 @@ struct SignInView: View {
                 onSignedIn()
             } catch {
                 errorText = "Couldn't start a profile \u{2014} try again"
-            }
-            loading = false
-        }
-    }
-
-    private func skip() {
-        loading = true
-        errorText = nil
-        Task {
-            do {
-                // If something else already signed us in on a previous
-                // attempt, don't sign in again -- just move on.
-                if auth.currentUser == nil {
-                    try await auth.signInAnonymously()
-                }
-                onSkip()
-            } catch {
-                errorText = "Couldn't skip sign-in \u{2014} try again"
             }
             loading = false
         }
