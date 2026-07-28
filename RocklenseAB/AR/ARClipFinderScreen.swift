@@ -276,7 +276,12 @@ private struct ARClipFinderContainer: UIViewRepresentable {
             if let existing = wallAnchorEntity {
                 arView.scene.removeAnchor(existing)
             }
-            let anchorEntity = AnchorEntity(anchor: imageAnchor)
+            // RealityKit doesn't have an AnchorEntity(anchor:) initializer
+            // that takes an ARAnchor directly -- instead you anchor by the
+            // ARKit anchor's identifier, and RealityKit tracks it
+            // automatically since it's on the same ARSession backing this
+            // ARView.
+            let anchorEntity = AnchorEntity(.anchor(identifier: imageAnchor.identifier))
             markerEntities = []
 
             for (index, clip) in clips.enumerated() {
