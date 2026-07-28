@@ -46,8 +46,6 @@ targets:
       - package: Firebase
         product: FirebaseFirestore
       - package: Firebase
-        product: FirebaseFirestoreSwift
-      - package: Firebase
         product: FirebaseStorage
       - package: Firebase
         product: FirebaseCrashlytics
